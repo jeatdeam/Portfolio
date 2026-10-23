@@ -1,8 +1,8 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #0e0e0e;
+  --foreground: #ededed;
 }
 
 @theme inline {
@@ -10,17 +10,65 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --font-doto: var(--font-doto-family);
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
+}
+
+/* ---------- PillWalker ---------- */
+.pw-root {
+  position: relative;
+}
+
+.pw-walker {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 1;
+  opacity: 0;
+  pointer-events: none;
+}
+.pw-lottie {
+  width: 100%;
+  height: 100%;
+}
+.pw-walker.flip .pw-lottie {
+  transform: scaleX(-1);
+}
+
+.pw-guide {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+}
+.pw-guide path {
+  fill: none;
+  stroke: #ff7a1a;
+  stroke-width: 1.5;
+  stroke-dasharray: 4 4;
+  opacity: 0.7;
+}
+
+/* ---------- Créditos: cursor del tipeo ---------- */
+.credits-caret {
+  margin-left: 1px;
+  animation: caret-blink 1s steps(1) infinite;
+}
+@keyframes caret-blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pw-walker {
+    animation-play-state: paused !important;
+  }
 }
