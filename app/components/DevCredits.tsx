@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import LottiePlayer from "./LottiePlayer";
 import jeatdeam from "../lotties/jeatdeam_footer.json";
-import pochita from "../lotties/pochita_pixel.json";
+import pochita from "../lotties/pochita_durmiendo.json";
 
 const TEXT = "Diseñado y desarrollado por:";
 const TYPE_MS = 90; // por letra al escribir
@@ -48,9 +48,10 @@ export default function DevCredits() {
           <span className="credits-caret">|</span>
         </span>
       </p>
-      <div className="flex items-center justify-center gap-[20px]">
+      <div className="flex items-center justify-center gap-[15px]">
         <LottiePlayer animationData={jeatdeam} label="jeatdeam" style={{ width: 120, height: 50 }} />
-        <LottiePlayer animationData={pochita} label="Pochita" style={{ width: 56, height: 50 }} />
+        {/* Pochita durmiendo (460×470): mismo alto que la firma, ancho con su proporción */}
+        <LottiePlayer animationData={pochita} label="Pochita durmiendo" style={{ width: 49, height: 50 }} />
       </div>
     </section>
   );

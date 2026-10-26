@@ -1,21 +1,13 @@
 import type { Metadata } from "next";
-import { Doto, Geist, Geist_Mono } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
-
-const doto = Doto({
+// Doto (Oliver Lalan) es la tipografía de todo el sitio, incluidos los créditos.
+// Va dentro del proyecto para no depender de la conexión con Google Fonts al compilar.
+const doto = localFont({
+  src: "./fonts/Doto-Variable.woff2",
   variable: "--font-doto-family",
-  subsets: ["latin"],
-  weight: "700",
+  weight: "100 900",
 });
 
 export const metadata: Metadata = {
@@ -27,7 +19,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="es"
-      className={`${geistSans.variable} ${geistMono.variable} ${doto.variable} h-full scroll-smooth antialiased`}
+      className={`${doto.variable} h-full scroll-smooth antialiased`}
     >
       <body className="min-h-full flex flex-col">{children}</body>
     </html>

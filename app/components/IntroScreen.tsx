@@ -44,7 +44,7 @@ export default function IntroScreen() {
     <div
       role="status"
       aria-label="Cargando el portfolio"
-      className="fixed inset-0 z-50 flex flex-col items-center justify-center gap-8 bg-[#0e0e0e] px-6 text-center transition-[opacity,transform,filter] ease-out"
+      className="fixed inset-0 z-50 flex flex-col items-center justify-center gap-8 bg-background px-6 text-center transition-[opacity,transform,filter] ease-out"
       style={{
         opacity: leaving ? 0 : 1,
         transform: leaving ? "scale(1.04)" : "scale(1)",

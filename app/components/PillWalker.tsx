@@ -133,6 +133,7 @@ export default function PillWalker({
           key={`${hide}|${fade}|${repeat}|${sink}|${fullLap}|${inside}`}
           className={`pw-walker ${mirrored ? "flip" : ""}`}
           aria-hidden
+          data-rain-hit="box" // la lluvia salpica al caerle encima
           style={{
             width: size,
             height,
