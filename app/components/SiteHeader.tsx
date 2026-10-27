@@ -17,14 +17,11 @@ export default function SiteHeader() {
         speed={0.6}
         size={44}
         sink={2}
-        className="glass flex items-center justify-between rounded-3xl px-6 py-4"
+        className="glass flex items-center justify-end rounded-3xl px-6 py-4"
       >
-        <a href="#inicio" className="font-mono text-lg font-black tracking-tight text-white">
-          Paulo<span className="text-accent">Dev</span>
-        </a>
         <div className="flex items-center gap-6">
           <nav aria-label="Principal">
-            <ul className="flex flex-wrap justify-center gap-x-6 gap-y-2 text-sm text-zinc-50">
+            <ul className="flex flex-wrap justify-center gap-x-6 gap-y-2 text-sm text-white">
               {NAV_LINKS.map((link) => (
                 <li key={link.href}>
                   <a href={link.href} className="transition-colors hover:text-accent">

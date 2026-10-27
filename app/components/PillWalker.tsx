@@ -117,7 +117,8 @@ export default function PillWalker({
   const mirrored = flip !== inside;
 
   return (
-    <Tag ref={ref} className={`pw-root ${className}`} style={style}>
+    // data-rain-cover: el contenedor tapa a quien camina por debajo, así no le cae la lluvia
+    <Tag ref={ref} className={`pw-root ${className}`} style={style} data-rain-cover>
       <style>{keyframes}</style>
       {children}
 

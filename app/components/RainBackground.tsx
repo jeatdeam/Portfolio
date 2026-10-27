@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { INTRO_FADE_MS, INTRO_SHOW_MS } from "./intro-timing";
 import { RAIN_EVENT, RAIN_LEVELS, readRainLevel } from "./rain-intensity";
 
 // Lluvia de fondo en canvas 2D: las gotas caen, revientan al tocar su "suelo"
@@ -12,12 +11,12 @@ import { RAIN_EVENT, RAIN_LEVELS, readRainLevel } from "./rain-intensity";
 const DROPS_PER_1000PX = 90; // densidad según el ancho de la pantalla (nivel "Lluvia")
 const GRAVITY = 1800; // px/s² para las gotitas de la salpicadura
 const WIND = -60; // px/s, una leve inclinación hacia la izquierda
-const HIT_AFTER_MS = INTRO_SHOW_MS + INTRO_FADE_MS; // no choca con nada mientras está la intro
+const HIT_AFTER_MS = 700; // no choca con nada mientras dura la entrada de la página (.page-enter)
 
 type Drop = { x: number; y: number; z: number; speed: number; len: number; floor: number };
 type Splash = { x: number; y: number; vx: number; vy: number; life: number; max: number; size: number };
 type Ripple = { x: number; y: number; r: number; max: number; life: number; z: number };
-type Obstacle = { el: Element; shape: string };
+type Obstacle = { el: Element; shape: string; cover: Element | null };
 
 export default function RainBackground() {
   const backRef = useRef<HTMLCanvasElement>(null);
@@ -47,6 +46,8 @@ export default function RainBackground() {
       obstacles = Array.from(document.querySelectorAll("[data-rain-hit]"), (el) => ({
         el,
         shape: el.getAttribute("data-rain-hit") || "box",
+        // Un contenedor con data-rain-cover lo tapa cuando pasa por debajo (Pochita bajo el menú)
+        cover: el.parentElement?.closest("[data-rain-cover]") ?? null,
       }));
     };
 
@@ -115,6 +116,14 @@ export default function RainBackground() {
 
     // Altura de la superficie del obstáculo bajo x, o null si la gota no pasa por encima
     const surfaceAt = (o: Obstacle, x: number) => {
+      const y = rawSurfaceAt(o, x);
+      if (y === null || !o.cover) return y;
+      // Si el contenedor está encima de ese punto, la gota choca con él y nunca llega al obstáculo
+      const c = o.cover.getBoundingClientRect();
+      return x >= c.left && x <= c.right && y > c.top ? null : y;
+    };
+
+    const rawSurfaceAt = (o: Obstacle, x: number) => {
       const r = o.el.getBoundingClientRect();
       if (r.width === 0 || r.bottom < 0 || r.top > height) return null;
       if (o.shape === "circle") {

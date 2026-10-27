@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useId, useState } from "react";
 import { RAIN_EVENT, RAIN_LEVELS, readRainLevel, setRainLevel } from "./rain-intensity";
 
 type Props = {
-  // "pill": botón del menú de arriba. "rail": botón de la barra lateral, que solo
+  // "pill": gota del menú de arriba. "rail": botón de la barra lateral, que solo
   // muestra el nombre del nivel cuando la barra está expandida.
   variant?: "pill" | "rail";
   expanded?: boolean;
@@ -13,6 +13,7 @@ type Props = {
 // Cada clic sube la lluvia un nivel y después de "Tormenta" vuelve al inicio
 export default function RainControl({ variant = "pill", expanded = false }: Props) {
   const [level, setLevel] = useState(0);
+  const clipId = useId();
 
   // El nivel guardado solo existe en el navegador, se lee después de montar.
   // También escucha a los otros botones (menú y barra lateral) para quedar en sintonía.
@@ -30,9 +31,26 @@ export default function RainControl({ variant = "pill", expanded = false }: Prop
   const upcoming = RAIN_LEVELS[(level + 1) % RAIN_LEVELS.length];
   const label = `Intensidad de la lluvia: ${current.label}. Cambiar a ${upcoming.label}`;
 
+  // La gota se llena según el nivel: un tercio con "Lluvia", dos con "Fuerte" y entera con "Tormenta"
+  const DROP_TOP = 2.5;
+  const DROP_BOTTOM = 20;
+  const fillTop = DROP_BOTTOM - ((DROP_BOTTOM - DROP_TOP) * (level + 1)) / RAIN_LEVELS.length;
+  const dropPath = "M12 2.5c-.3 0-.6.2-.8.4C9.6 5 6 9.8 6 14a6 6 0 0 0 12 0c0-4.2-3.6-9-5.2-11.1-.2-.2-.5-.4-.8-.4Z";
   const drop = (
-    <svg viewBox="0 0 24 24" className="size-4 shrink-0" fill="currentColor" aria-hidden>
-      <path d="M12 2.5c-.3 0-.6.2-.8.4C9.6 5 6 9.8 6 14a6 6 0 0 0 12 0c0-4.2-3.6-9-5.2-11.1-.2-.2-.5-.4-.8-.4Z" />
+    <svg viewBox="0 0 24 24" className="size-4 shrink-0" aria-hidden>
+      <clipPath id={clipId}>
+        <path d={dropPath} />
+      </clipPath>
+      <rect
+        x="0"
+        y={fillTop}
+        width="24"
+        height={DROP_BOTTOM - fillTop}
+        fill="currentColor"
+        clipPath={`url(#${clipId})`}
+        className="transition-[y,height] duration-300 ease-out"
+      />
+      <path d={dropPath} fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />
     </svg>
   );
 
@@ -56,7 +74,7 @@ export default function RainControl({ variant = "pill", expanded = false }: Prop
         onClick={next}
         aria-label={label}
         title={expanded ? undefined : label}
-        className={`flex h-11 w-full items-center rounded-xl text-accent transition-colors hover:bg-accent/15 focus-visible:outline-2 focus-visible:outline-accent ${
+        className={`flex h-9 w-full items-center rounded-xl text-white transition-colors hover:bg-white/10 hover:text-accent focus-visible:outline-2 focus-visible:outline-accent ${
           expanded ? "gap-3 px-3" : "justify-center"
         }`}
       >
@@ -69,17 +87,16 @@ export default function RainControl({ variant = "pill", expanded = false }: Prop
     );
   }
 
+  // Menú de escritorio: solo la gota, llena según el nivel. Cada clic sube un nivel
   return (
     <button
       type="button"
       onClick={next}
       aria-label={label}
-      className="flex items-center gap-2 rounded-full border border-accent/40 bg-accent/10 px-3 py-1.5 text-accent transition-colors hover:border-accent hover:bg-accent/20 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+      title={label}
+      className="flex items-center rounded-full border border-accent/40 bg-accent/10 p-1.5 text-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
     >
       {drop}
-      {/* Ancho fijo (Doto es monoespaciada): el menú no salta al cambiar de etiqueta */}
-      <span className="w-[8ch] text-left">{current.label}</span>
-      {bars}
     </button>
   );
 }

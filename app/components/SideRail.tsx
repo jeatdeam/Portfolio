@@ -3,7 +3,6 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import RainControl from "./RainControl";
 import { NAV_LINKS } from "./nav-links";
-import { INTRO_SHOW_MS } from "./intro-timing";
 
 // Íconos de cada sección, en trazo para que combinen con los bocetos de los proyectos
 const ICONS: Record<string, ReactNode> = {
@@ -49,16 +48,16 @@ function Icon({ children }: { children: ReactNode }) {
 }
 
 /**
- * Menú de celular y tablet: un solo botón flotante arriba a la izquierda. Al tocarlo se estira
- * hacia abajo en una barra angosta con solo los íconos de cada sección y el de la lluvia.
- * Se cierra con la X, tocando fuera, eligiendo una sección o con Escape. En escritorio no se muestra.
+ * Menú de celular y tablet: un botón flotante arriba a la izquierda. Al tocarlo aparece, al centro del
+ * lado izquierdo, una barra angosta de vidrio con solo los íconos de cada sección y el de la lluvia.
+ * Se cierra con el botón, tocando fuera, eligiendo una sección o con Escape. En escritorio no se muestra.
  */
 export default function SideRail() {
   const [open, setOpen] = useState(false);
-  const railRef = useRef<HTMLElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
   const toggleRef = useRef<HTMLButtonElement>(null);
 
-  // Abierta: Escape o un toque fuera de la barra la cierran
+  // Abierta: Escape o un toque fuera del botón y la barra la cierran
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
@@ -68,7 +67,7 @@ export default function SideRail() {
       }
     };
     const onPointer = (e: PointerEvent) => {
-      if (!railRef.current?.contains(e.target as Node)) setOpen(false);
+      if (!menuRef.current?.contains(e.target as Node)) setOpen(false);
     };
     window.addEventListener("keydown", onKey);
     window.addEventListener("pointerdown", onPointer);
@@ -79,59 +78,50 @@ export default function SideRail() {
   }, [open]);
 
   return (
-    <aside
-      ref={railRef}
-      aria-label="Menú"
-      // Entra junto con el resto del portfolio, cuando termina la pantalla de inicio.
-      // Va sobre las salpicaduras (z-40) y bajo la pantalla de inicio (z-50).
-      style={{ animationDelay: `${INTRO_SHOW_MS}ms` }}
-      className={`page-enter glass fixed top-4 left-4 z-[45] flex w-12 flex-col items-center rounded-2xl p-0.5 lg:hidden ${
-        open ? "rail-open" : ""
-      }`}
-    >
+    // Van sobre las salpicaduras (z-40)
+    <div ref={menuRef} className="lg:hidden">
       <button
         ref={toggleRef}
         type="button"
         onClick={() => setOpen((o) => !o)}
         aria-expanded={open}
-        aria-controls="side-rail-icons"
+        aria-controls="side-rail"
         aria-label={open ? "Cerrar menú" : "Abrir menú"}
-        className="flex size-11 items-center justify-center rounded-xl text-white transition-colors hover:text-accent focus-visible:outline-2 focus-visible:outline-accent"
+        className="page-enter glass fixed top-4 left-4 z-[45] flex size-10 items-center justify-center rounded-xl text-white transition-colors hover:text-accent focus-visible:outline-2 focus-visible:outline-accent"
       >
         <Icon>{open ? <path d="M6 6l12 12M18 6 6 18" /> : <path d="M4 7h16M4 12h16M4 17h16" />}</Icon>
       </button>
 
-      {/* Los íconos se despliegan hacia abajo; cerrada la barra quedan fuera del orden de tabulación */}
-      <div
-        id="side-rail-icons"
+      {/* Cerrada, la barra queda fuera del orden de tabulación y no recibe toques */}
+      <aside
+        id="side-rail"
+        aria-label="Menú"
         inert={!open}
-        className={`grid w-full transition-[grid-template-rows,opacity] duration-300 ease-out ${
-          open ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
+        className={`glass fixed top-1/2 left-4 z-[45] w-10 -translate-y-1/2 rounded-2xl p-0.5 transition-[opacity,translate] duration-300 ease-out ${
+          open ? "translate-x-0 opacity-100" : "pointer-events-none -translate-x-4 opacity-0"
         }`}
       >
-        <div className="overflow-hidden">
-          <nav aria-label="Secciones" className="mt-1 border-t border-white/10 pt-1">
-            <ul className="flex flex-col items-center gap-1">
-              {NAV_LINKS.map((link) => (
-                <li key={link.href}>
-                  <a
-                    href={link.href}
-                    onClick={() => setOpen(false)}
-                    aria-label={link.label}
-                    title={link.label}
-                    className="flex size-11 items-center justify-center rounded-xl text-zinc-50 transition-colors hover:bg-white/10 hover:text-accent focus-visible:outline-2 focus-visible:outline-accent"
-                  >
-                    <Icon>{ICONS[link.href]}</Icon>
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </nav>
-          <div className="mt-1 border-t border-white/10 pt-1">
-            <RainControl variant="rail" />
-          </div>
+        <nav aria-label="Secciones">
+          <ul className="flex flex-col items-center gap-1">
+            {NAV_LINKS.map((link) => (
+              <li key={link.href}>
+                <a
+                  href={link.href}
+                  onClick={() => setOpen(false)}
+                  aria-label={link.label}
+                  title={link.label}
+                  className="flex size-9 items-center justify-center rounded-xl text-white transition-colors hover:bg-white/10 hover:text-accent focus-visible:outline-2 focus-visible:outline-accent"
+                >
+                  <Icon>{ICONS[link.href]}</Icon>
+                </a>
+              </li>
+            ))}
+          </ul>
+        </nav>
+        <div className="mt-1 border-t border-white/15 pt-1">
+          <RainControl variant="rail" />
         </div>
-      </div>
-    </aside>
+      </aside>
+    </div>
   );
 }

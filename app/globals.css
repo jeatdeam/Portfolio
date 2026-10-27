@@ -33,34 +33,23 @@ body {
 }
 
 /* ---------- Vidrio (menú) ---------- */
-/* Ventana mojada: tinte celeste, reflejo arriba y un desenfoque suave que deja
-   ver la lluvia del fondo como trazos borrosos (con más blur las gotas desaparecen) */
+/* Vidrio blanco esmerilado: deja ver la lluvia del fondo como trazos borrosos, sin resplandor */
 .glass {
-  background:
-    radial-gradient(120% 90% at 18% -35%, rgb(186 230 253 / 0.28), transparent 60%),
-    linear-gradient(180deg, rgb(56 189 248 / 0.22) 0%, rgb(14 165 233 / 0.12) 55%, rgb(2 132 199 / 0.2) 100%);
+  background: rgb(255 255 255 / 0.3);
   box-shadow:
-    inset 0 1px 0 rgb(224 242 254 / 0.4),
-    inset 0 0 28px rgb(56 189 248 / 0.12),
-    0 14px 36px -14px rgb(2 132 199 / 0.55),
-    0 2px 6px rgb(0 0 0 / 0.4);
-  -webkit-backdrop-filter: blur(5px) saturate(180%) brightness(1.2);
-  backdrop-filter: blur(5px) saturate(180%) brightness(1.2);
+    inset 0 1px 0 rgb(255 255 255 / 0.3),
+    0 8px 24px -8px rgb(0 0 0 / 0.5);
+  -webkit-backdrop-filter: blur(12px) saturate(140%);
+  backdrop-filter: blur(12px) saturate(140%);
 }
-/* Borde degradado: la luz pega en el canto superior izquierdo y rebota abajo a la derecha */
+/* Borde blanco fino y suave que enmarca el vidrio (menú de escritorio y barra de celular) */
 .glass::before {
   content: "";
   position: absolute;
   inset: 0;
   padding: 1px;
   border-radius: inherit;
-  background: linear-gradient(
-    150deg,
-    rgb(224 242 254 / 0.7),
-    rgb(125 211 252 / 0.15) 35%,
-    rgb(255 255 255 / 0.05) 65%,
-    rgb(56 189 248 / 0.45)
-  );
+  background: rgb(255 255 255 / 0.3);
   -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
   -webkit-mask-composite: xor;
   mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
@@ -121,8 +110,7 @@ body {
   }
 }
 
-/* ---------- Entrada del portfolio tras la pantalla de inicio ---------- */
-/* El retraso (INTRO_SHOW_MS) se pone en línea desde app/page.tsx */
+/* ---------- Entrada del portfolio ---------- */
 .page-enter {
   animation: page-enter 700ms ease-out both;
 }
@@ -154,11 +142,4 @@ body {
 }
 .sketch .sketch-icon {
   stroke-opacity: 1;
-}
-
-/* ---------- Barra lateral (celular y tablet) ---------- */
-/* Expandida tapa la página: el vidrio se vuelve casi opaco para que los nombres se lean
-   (el desenfoque de .glass sigue, pero ya no se transparenta el contenido) */
-.glass.rail-open {
-  background-color: rgb(7 13 28 / 0.9);
 }
