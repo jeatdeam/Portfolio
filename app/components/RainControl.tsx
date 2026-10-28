@@ -94,6 +94,7 @@ export default function RainControl({ variant = "pill", expanded = false }: Prop
       onClick={next}
       aria-label={label}
       title={label}
+      data-rain-pill
       className="flex items-center rounded-full border border-accent/40 bg-accent/10 p-1.5 text-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
     >
       {drop}

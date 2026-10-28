@@ -110,6 +110,7 @@ function ProjectCard({ project }: { project: Project }) {
       href={project.live ?? project.repo}
       target="_blank"
       rel="noopener noreferrer"
+      data-rain-card
       className="flex h-full flex-col overflow-hidden rounded-2xl sm:max-lg:flex-row border border-white/10 bg-surface transition-colors hover:border-accent/60 focus-visible:border-accent focus-visible:outline-none"
     >
       <div className="relative aspect-[16/10] border-b border-white/10 bg-[#0b1734] p-3 sm:max-lg:w-[48%] sm:max-lg:shrink-0 sm:max-lg:border-r sm:max-lg:border-b-0">
@@ -154,7 +155,8 @@ export default function Home() {
       <RainBackground />
       <SideRail />
       {/* overflow-clip: la caja agrandada de la firma (con su espacio vacío) no alarga la página por debajo */}
-      <div className="page-enter flex flex-1 flex-col overflow-clip">
+      {/* data-rain-words: las gotas revientan sobre una palabra, botón o caja al azar de toda la página */}
+      <div className="page-enter flex flex-1 flex-col overflow-clip" data-rain-words>
         <SiteHeader />
 
         <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-28 px-6 py-24">
@@ -164,27 +166,26 @@ export default function Home() {
           >
             <div>
               <p className="mb-4 font-mono text-accent">Hola, soy</p>
-              <h1 className="text-5xl font-black tracking-tight text-white sm:text-7xl">
-                {/* Las gotas revientan solo sobre "Paulo" */}
-                <span data-rain-hit="text">Paulo</span> Aylas
+              {/* data-rain-boost: cuando la lluvia elige estas palabras, les caen muchas más gotas */}
+              <h1 data-rain-boost className="text-5xl font-black tracking-tight text-white sm:text-7xl">
+                Paulo Aylas
               </h1>
-              <p className="mt-4 text-2xl text-zinc-100 sm:text-3xl">
-                {/* Las gotas revientan sobre "web front-end." */}
-                Desarrollador <span data-rain-hit="text">web front-end.</span>
+              <p data-rain-boost className="mt-4 text-2xl text-zinc-100 sm:text-3xl">
+                Desarrollador web front-end.
               </p>
               <p className="mt-6 max-w-xl leading-relaxed text-zinc-100">
                 Construyo interfaces rápidas, accesibles y con animaciones que les dan personalidad.
               </p>
               <div className="mt-10 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:gap-4">
-                <a href="#proyectos" data-rain-hit="pill" className="rounded-full bg-sky-600 px-6 py-3 text-center font-black text-white transition-colors hover:bg-sky-500">
+                <a href="#proyectos" data-rain-pill className="rounded-full bg-sky-600 px-6 py-3 text-center font-black text-white transition-colors hover:bg-sky-500">
                   Ver proyectos
                 </a>
-                <a href="#contacto" data-rain-hit="pill" className="rounded-full text-center border border-white/20 bg-surface px-6 py-3 font-black text-white transition-colors hover:border-accent/60 hover:bg-surface-hover">
+                <a href="#contacto" data-rain-pill className="rounded-full text-center border border-white/20 bg-surface px-6 py-3 font-black text-white transition-colors hover:border-accent/60 hover:bg-surface-hover">
                   Contactar
                 </a>
                 <a
                   href={GITHUB_URL}
-                  data-rain-hit="pill"
+                  data-rain-pill
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center justify-center gap-2 rounded-full border border-white/20 bg-surface px-6 py-3 font-black text-white transition-colors hover:border-accent/60 hover:bg-surface-hover"
@@ -237,6 +238,7 @@ export default function Home() {
               {STACK.map((tech) => (
                 <li
                   key={tech.name}
+                  data-rain-card
                   className="flex flex-col items-center gap-2 rounded-xl border border-white/10 bg-surface px-3 py-4 text-center transition-colors hover:border-accent/60 sm:flex-row sm:gap-3 sm:px-4 sm:py-3 sm:text-left"
                 >
                   <span className="flex shrink-0 -space-x-2">
@@ -267,6 +269,7 @@ export default function Home() {
             </p>
             <a
               href="mailto:tu-correo@ejemplo.com"
+              data-rain-pill
               className="mt-6 inline-block rounded-full bg-sky-600 px-6 py-3 font-black text-white transition-colors hover:bg-sky-500"
             >
               Enviar correo

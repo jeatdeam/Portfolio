@@ -7,16 +7,27 @@ import { RAIN_EVENT, RAIN_LEVELS, readRainLevel } from "./rain-intensity";
 // y dejan una onda y unas gotitas que salpican hacia arriba.
 // Los elementos con data-rain-hit ("box", "circle", "pill" o "text") también reciben gotas:
 // esas salpicaduras se dibujan en un segundo canvas por delante del contenido.
+// Dentro de [data-rain-words] las gotas revientan sobre una sola palabra, botón [data-rain-pill]
+// o caja [data-rain-card] elegida al azar; tras unas cuantas gotas salta a otra, en un ciclo sin fin.
 
 const DROPS_PER_1000PX = 90; // densidad según el ancho de la pantalla (nivel "Lluvia")
 const GRAVITY = 1800; // px/s² para las gotitas de la salpicadura
 const WIND = -60; // px/s, una leve inclinación hacia la izquierda
 const HIT_AFTER_MS = 700; // no choca con nada mientras dura la entrada de la página (.page-enter)
+const WORD_HITS = [8, 16]; // gotas que recibe cada palabra antes de saltar a otra (mín, máx)
+const BOOST_HITS = [25, 40]; // palabras con data-rain-boost (nombre y subtítulo): reciben más gotas
+const BOOST_PICK = 0.5; // probabilidad de que el siguiente turno sea para una palabra con data-rain-boost
+const BOOST_AIM = 0.15; // fracción de gotas nuevas que apuntan a una palabra con data-rain-boost
+const WORD_MAX_MS = 4000; // pasado este tiempo se salta a otra, aunque no haya recibido todas sus gotas
 
 type Drop = { x: number; y: number; z: number; speed: number; len: number; floor: number };
 type Splash = { x: number; y: number; vx: number; vy: number; life: number; max: number; size: number };
 type Ripple = { x: number; y: number; r: number; max: number; life: number; z: number };
 type Obstacle = { el: Element; shape: string; cover: Element | null };
+// Una palabra suelta (un Range sobre el texto) o un botón / caja entero
+type WordTarget =
+  | { shape: "text"; range: Range; node: Node; key: string }
+  | { shape: "pill" | "card"; el: Element; radius: number; key: Element };
 
 export default function RainBackground() {
   const backRef = useRef<HTMLCanvasElement>(null);
@@ -49,21 +60,95 @@ export default function RainBackground() {
         // Un contenedor con data-rain-cover lo tapa cuando pasa por debajo (Pochita bajo el menú)
         cover: el.parentElement?.closest("[data-rain-cover]") ?? null,
       }));
+      findWords();
     };
+
+    // Palabras, botones y cajas de la página. Se rearman en cada búsqueda porque el texto cambia
+    // (la máquina de escribir de los créditos); la palabra activa se reconoce por su clave.
+    let words: WordTarget[] = [];
+    let active: WordTarget | null = null;
+    let hitsLeft = 0;
+    let activeSince = 0;
+
+    const findWords = () => {
+      words = [];
+      for (const root of document.querySelectorAll("[data-rain-words]")) {
+        // Botones y cajas cuentan como uno solo: la gota revienta en su borde de arriba
+        for (const el of root.querySelectorAll("[data-rain-pill], [data-rain-card]")) {
+          const pill = el.hasAttribute("data-rain-pill");
+          const radius = pill ? 0 : parseFloat(getComputedStyle(el).borderTopLeftRadius) || 0;
+          words.push({ shape: pill ? "pill" : "card", el, radius, key: el });
+        }
+        const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+        for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+          const parent = node.parentElement;
+          if (!parent || parent.closest("[data-rain-pill], [data-rain-card]")) continue;
+          // Texto invisible que solo reserva espacio (el de los créditos)
+          if (!parent.checkVisibility({ visibilityProperty: true })) continue;
+          for (const m of (node.textContent ?? "").matchAll(/\S+/g)) {
+            const range = document.createRange();
+            range.setStart(node, m.index);
+            range.setEnd(node, m.index + m[0].length);
+            words.push({ shape: "text", range, key: `${m.index}`, node });
+          }
+        }
+      }
+      // La palabra activa pasa a ser la de la nueva lista (o se suelta si ya no existe)
+      if (active) active = words.find((w) => sameWord(w, active!)) ?? null;
+    };
+
+    const sameWord = (a: WordTarget, b: WordTarget) =>
+      a.key === b.key && (a.shape !== "text" || (b.shape === "text" && a.node === b.node));
+
+    const wordRect = (w: WordTarget) => (w.shape === "text" ? w.range : w.el).getBoundingClientRect();
+
+    const isVisible = (w: WordTarget) => {
+      const r = wordRect(w);
+      return r.width > 1 && r.bottom > 0 && r.top < height;
+    };
+
+    // Elige otra palabra visible al azar (nunca la misma dos veces seguidas)
+    const pickWord = (now: number) => {
+      // Primero un elemento (título, párrafo, botón, caja…) y luego una de sus palabras:
+      // así un párrafo largo no tiene más chances que "Paulo Aylas" o un botón
+      const groups = new Map<Element, WordTarget[]>();
+      for (const w of words) {
+        if ((active && sameWord(w, active)) || !isVisible(w)) continue;
+        const g = w.shape === "text" ? w.node.parentElement! : w.el;
+        groups.set(g, [...(groups.get(g) ?? []), w]);
+      }
+      // El nombre y el subtítulo (data-rain-boost) tienen prioridad: salen la mitad de las veces
+      const all = [...groups.entries()];
+      const priority = all.filter(([g]) => g.closest("[data-rain-boost]"));
+      const options = (priority.length && Math.random() < BOOST_PICK ? priority : all).map(([, ws]) => ws);
+      const group = options[Math.floor(Math.random() * options.length)];
+      active = group ? group[Math.floor(Math.random() * group.length)] : null;
+      const el = active && (active.shape === "text" ? active.node.parentElement : active.el);
+      boosted = !!el?.closest("[data-rain-boost]");
+      const [min, max] = boosted ? BOOST_HITS : WORD_HITS;
+      hitsLeft = min + Math.floor(Math.random() * (max - min + 1));
+      activeSince = now;
+    };
+
+    // Rectángulo de la palabra activa en este fotograma (lo usa spawnDrop para apuntar)
+    let activeRect: DOMRect | null = null;
+    let boosted = false;
 
     // z va de 0 (lejos) a 1 (cerca): las cercanas son más largas, rápidas y revientan más abajo
     const spawnDrop = (d: Partial<Drop> = {}, startAnywhere = false): Drop => {
       const z = Math.random() ** 1.5;
-      const floor = height * (0.72 + z * 0.26) + Math.random() * 20;
-      return {
-        x: Math.random() * (width + 100),
-        y: startAnywhere ? Math.random() * floor : -Math.random() * height * 0.3 - 20,
-        z,
-        speed: 700 + z * 900,
-        len: 10 + z * 22,
-        floor,
-        ...d,
-      };
+      let floor = height * (0.72 + z * 0.26) + Math.random() * 20;
+      const speed = 700 + z * 900;
+      const y = startAnywhere ? Math.random() * floor : -Math.random() * height * 0.3 - 20;
+      let x = Math.random() * (width + 100);
+      // Palabra con data-rain-boost: parte de las gotas nuevas caen justo encima de ella.
+      // Se resta lo que el viento la va a correr hasta llegar a la palabra.
+      if (!startAnywhere && boosted && activeRect && Math.random() < BOOST_AIM) {
+        const fall = (activeRect.top - y) / speed;
+        x = activeRect.left + Math.random() * activeRect.width - WIND * (0.5 + z) * fall;
+        floor = Math.max(floor, activeRect.bottom);
+      }
+      return { x, y, z, speed, len: 10 + z * 22, floor, ...d };
     };
 
     const resize = () => {
@@ -123,24 +208,25 @@ export default function RainBackground() {
       return x >= c.left && x <= c.right && y > c.top ? null : y;
     };
 
-    const rawSurfaceAt = (o: Obstacle, x: number) => {
-      const r = o.el.getBoundingClientRect();
+    const rawSurfaceAt = (o: Obstacle, x: number) => shapeSurfaceAt(o.shape, o.el.getBoundingClientRect(), x);
+
+    const shapeSurfaceAt = (shape: string, r: DOMRect, x: number, radius = 0) => {
       if (r.width === 0 || r.bottom < 0 || r.top > height) return null;
-      if (o.shape === "circle") {
+      if (shape === "circle") {
         const radius = r.width / 2;
         const dx = x - (r.left + radius);
         if (Math.abs(dx) >= radius) return null;
         return r.top + radius - Math.sqrt(radius * radius - dx * dx);
       }
-      if (o.shape === "pill") {
-        // Botón redondeado: borde recto arriba y medio círculo en cada punta
-        const radius = r.height / 2;
+      if (shape === "pill" || shape === "card") {
+        // Borde recto arriba y esquinas redondeadas; el botón es medio círculo en cada punta
+        if (shape === "pill") radius = r.height / 2;
         if (x < r.left || x > r.right) return null;
         const cx = Math.min(Math.max(x, r.left + radius), r.right - radius);
         const dx = x - cx;
         return r.top + radius - Math.sqrt(Math.max(radius * radius - dx * dx, 0));
       }
-      if (o.shape === "text") {
+      if (shape === "text") {
         // Título: el alto de línea deja aire arriba, las letras empiezan un poco más abajo
         if (x < r.left || x > r.right) return null;
         return r.top + r.height * 0.18;
@@ -185,6 +271,12 @@ export default function RainBackground() {
       }
       const canHit = now - mountedAt > HIT_AFTER_MS;
 
+      // Cambia de palabra si ya recibió sus gotas, si tardó demasiado o si salió de la pantalla
+      if (canHit && words.length && (!active || hitsLeft <= 0 || now - activeSince > WORD_MAX_MS || !isVisible(active))) {
+        pickWord(now);
+      }
+      activeRect = canHit && active ? wordRect(active) : null;
+
       // Gotas cayendo
       ctx.lineCap = "round";
       for (let i = 0; i < drops.length; i++) {
@@ -201,6 +293,13 @@ export default function RainBackground() {
             if (sy !== null && prevY < sy && d.y >= sy) {
               hitY = sy;
               break;
+            }
+          }
+          if (hitY === null && active && activeRect) {
+            const sy = shapeSurfaceAt(active.shape, activeRect, d.x, active.shape === "card" ? active.radius : 0);
+            if (sy !== null && prevY < sy && d.y >= sy) {
+              hitY = sy;
+              hitsLeft--;
             }
           }
           if (hitY !== null) {
